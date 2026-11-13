@@ -24,7 +24,7 @@ More cases · [006](docs/github_gif_showcase_20261104/assets/sloshing/case-006.g
 
 ## Dam break at three input resolutions
 
-The original AFM baseline reconstructs the common development cases from native 16, 32, and 64 inputs, all at 256 output resolution. Each model uses its epoch-100 checkpoint and 50-step autoregressive inference.
+For the common development cases, each column shows a native 16, 32, or 64 input above its 256 reconstruction. The left column shows the shared OpenFOAM 256 reference. The original AFM baseline uses epoch-100 checkpoints and 50-step autoregressive inference.
 
 [![Dam-break case 031 showing the OpenFOAM reference and original AFM reconstructions from native 16, 32, and 64 grids](docs/github_gif_showcase_20261104/assets/dam-break-resolutions/case-031.webp)](docs/github_gif_showcase_20261104/assets/dam-break-resolutions/case-031.gif)
 
@@ -32,10 +32,10 @@ More cases · [010](docs/github_gif_showcase_20261104/assets/dam-break-resolutio
 
 ## Sloshing at four input resolutions
 
-The same held-out flow is reconstructed from native 16, 32, 64, and 128 grids. Each progressive AFM + RAW model reconstructs a 256-grid sequence using 50-step autoregressive inference. The runs share the case split. Training used batch size 4 for the 16 and 64 inputs and batch size 8 for the 32 and 128 inputs, resulting in different optimizer update counts.
+For the same held-out flow, each column shows a native 16, 32, 64, or 128 input above its 256 reconstruction. The left column shows the OpenFOAM 256 reference. Each progressive AFM + RAW model uses 50-step autoregressive inference. The runs share the case split. Training used batch size 4 for the 16 and 64 inputs and batch size 8 for the 32 and 128 inputs, resulting in different optimizer update counts.
 
 [![Sloshing case fs099 showing the OpenFOAM reference and four reconstructions from native 16, 32, 64, and 128 grids](docs/github_gif_showcase_20261104/assets/sloshing-resolutions/fs099.webp)](docs/github_gif_showcase_20261104/assets/sloshing-resolutions/fs099.gif)
 
 More cases · [fs007](docs/github_gif_showcase_20261104/assets/sloshing-resolutions/fs007.gif) · [fs070](docs/github_gif_showcase_20261104/assets/sloshing-resolutions/fs070.gif)
 
-Each animation contains 101 synchronized frames. Water fraction is shown on a fixed `[0, 1]` color scale with physical vertical direction pointing up. The dam-break and sloshing simulations use snapshot intervals of 0.015 s and 0.05 s, respectively.
+Each animation contains 101 synchronized frames. The common color scale maps water volume fraction 0 to white and 1 to blue. Physical vertical points upward. The dam-break and sloshing simulations use snapshot intervals of 0.015 s and 0.05 s, respectively.
