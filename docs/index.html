@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenFOAM 水相超分辨率 · 动画预览</title>
+<style>
+  :root { color-scheme: light dark; font: 16px/1.6 system-ui, sans-serif; }
+  body { margin: 0; }
+  main { max-width: 1350px; margin: 0 auto; padding: 22px clamp(16px, 4vw, 48px) 44px; }
+  h1, h2 { line-height: 1.25; }
+  section { margin-top: 2.25rem; }
+  .player { border: 1px solid color-mix(in srgb, CanvasText 20%, Canvas); border-radius: 9px; overflow: hidden; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; }
+  .controls button, .controls select { padding: 4px 8px; font: inherit; }
+  .controls input[type="range"] { flex: 1 1 200px; min-width: 120px; }
+  .controls output { min-width: 17ch; font-variant-numeric: tabular-nums; }
+  canvas { display: block; width: 100%; height: auto; background: white; }
+  .error { color: #b93131; margin: 8px 12px; }
+  .note { font-size: .92rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>OpenFOAM 水相超分辨率</h1>
+  <p>每段动画有 101 帧。点击「播放／暂停」，或拖动进度条直接停在某一帧。使用「上一帧」「下一帧」微调，工况可在下拉菜单中切换。</p>
+  <noscript>请启用浏览器的 JavaScript 以使用逐帧播放器。</noscript>
+
+  <section>
+    <h2>溃坝 · 64 → 256 算法对比</h2>
+    <p>共同开发工况。并排展示原生低分辨率输入、OpenFOAM 真值、渐进 50% + RAW、CFM、原始 AFM、EDSR、SwinIR、U-Net、FCN 和 DeepLabV3+。星号标出使用旧权重迁移评测的 CNN。</p>
+    <div data-player="dam-break" data-label="溃坝算法对比"></div>
+  </section>
+
+  <section>
+    <h2>晃荡 · 64 → 256 算法对比</h2>
+    <p>独立测试工况。并排展示低分辨率输入、OpenFOAM 真值、渐进 50% + RAW 和五个单帧基线。</p>
+    <div data-player="sloshing" data-label="晃荡算法对比"></div>
+  </section>
+
+  <section>
+    <h2>晃荡 · 不同输入分辨率</h2>
+    <p>同一工况、同一时刻下，比较 HR256 真值和渐进 50% + RAW 的四组自回归重建。输入分别为原生 16、32、64、128，输出均为 256。</p>
+    <div data-player="sloshing-resolutions" data-label="晃荡输入分辨率对比"></div>
+    <p class="note">四组采用相同的工况划分。16 和 64 输入使用 batch 4，32 和 128 输入使用 batch 8，优化器更新次数也随之不同。</p>
+  </section>
+</main>
+
+<template id="player-template">
+  <div class="player">
+    <div class="controls">
+      <label>工况 <select></select></label>
+      <button type="button" data-play>播放</button>
+      <button type="button" data-prev>上一帧</button>
+      <button type="button" data-next>下一帧</button>
+      <input type="range" min="0" max="100" step="1" value="0" aria-label="定位到帧">
+      <output></output>
+    </div>
+    <canvas role="img"></canvas>
+    <p class="error" role="alert" hidden></p>
+  </div>
+  <p class="note"><a target="_blank" rel="noopener" data-gif>打开原始 GIF</a></p>
+</template>
+<script src="github_gif_showcase_20261104_preview_frames/catalog.js"></script>
+<script>
+  const sheetsRoot = 'github_gif_showcase_20261104_preview_frames';
+  const gifsRoot = 'github_gif_showcase_20261104/assets';
+  const playerTemplate = document.querySelector('#player-template');
+
+  function initPlayer(host) {
+    const group = host.dataset.player;
+    const cases = frameCatalog[group];
+    host.append(playerTemplate.content.cloneNode(true));
+    const select = host.querySelector('select');
+    const canvas = host.querySelector('canvas');
+    const context = canvas.getContext('2d', { alpha: false });
+    const slider = host.querySelector('input');
+    const play = host.querySelector('[data-play]');
+    const previous = host.querySelector('[data-prev]');
+    const next = host.querySelector('[data-next]');
+    const output = host.querySelector('output');
+    const error = host.querySelector('.error');
+    const gif = host.querySelector('[data-gif]');
+    canvas.setAttribute('aria-label', host.dataset.label);
+    for (const item of cases) select.add(new Option(item.case.replace('case-', ''), item.case));
+
+    let current = cases[0];
+    let shown = 0;
+    let playing = false;
+    let revision = 0;
+    let timer;
+    const cache = new Map();
+
+    function loadSheet(page) {
+      const key = String(page).padStart(2, '0');
+      if (!cache.has(key)) {
+        const path = `${sheetsRoot}/${group}/${current.case}/${key}.webp`;
+        cache.set(key, new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = reject;
+          image.src = path;
+        }));
+        if (cache.size > 3) cache.delete(cache.keys().next().value);
+      }
+      return cache.get(key);
+    }
+
+    function stop() {
+      clearTimeout(timer);
+      playing = false;
+      play.textContent = '播放';
+    }
+
+    async function show(frame) {
+      const request = ++revision;
+      clearTimeout(timer);
+      const { width, height, count, delay, pageSize, dt } = current;
+      const page = Math.floor(frame / pageSize);
+      const offset = frame % pageSize;
+      slider.value = frame;
+      try {
+        const image = await loadSheet(page);
+        if (request !== revision) return;
+        context.drawImage(image, offset % 2 * width, Math.floor(offset / 2) * height,
+          width, height, 0, 0, width, height);
+        shown = frame;
+        const time = (frame * dt).toFixed(dt === 0.015 ? 3 : 2);
+        output.textContent = `第 ${frame} / ${count - 1} 帧 · ${time} s`;
+        slider.setAttribute('aria-valuetext', output.textContent);
+        previous.disabled = frame === 0;
+        next.disabled = frame === count - 1;
+        if (playing) timer = setTimeout(() => show((frame + 1) % count), delay);
+      } catch {
+        if (request !== revision) return;
+        stop();
+        cache.clear();
+        error.textContent = '无法载入帧素材。请保留 HTML 和配套帧素材目录的相对位置，或打开原始 GIF。';
+        error.hidden = false;
+      }
+    }
+
+    function setCase(item) {
+      stop();
+      cache.clear();
+      error.hidden = true;
+      current = item;
+      shown = 0;
+      canvas.width = item.width;
+      canvas.height = item.height;
+      slider.max = item.count - 1;
+      gif.href = `${gifsRoot}/${group}/${item.case}.gif`;
+      show(0);
+    }
+
+    function seek(frame) {
+      stop();
+      show(Math.max(0, Math.min(frame, current.count - 1)));
+    }
+
+    play.addEventListener('click', () => {
+      if (playing) {
+        seek(shown);
+        return;
+      }
+      playing = true;
+      play.textContent = '暂停';
+      show(shown);
+    });
+    previous.addEventListener('click', () => seek(shown - 1));
+    next.addEventListener('click', () => seek(shown + 1));
+    slider.addEventListener('input', () => seek(Number(slider.value)));
+    select.addEventListener('change', () => setCase(cases[select.selectedIndex]));
+    setCase(cases[0]);
+  }
+
+  for (const host of document.querySelectorAll('[data-player]')) initPlayer(host);
+</script>
+</body>
+</html>
