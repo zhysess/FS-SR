@@ -35,14 +35,21 @@
   <section>
     <h2>晃荡 · 64 → 256 算法对比</h2>
     <p>独立测试工况。并排展示低分辨率输入、OpenFOAM 真值、渐进 50% + RAW 和五个单帧基线。</p>
+    <p>镜头固定在实验室坐标系。各面板的容器、挡板和液面按该工况的设定位移同步水平往复运动，灰色短线标记容器的零位移中心。</p>
     <div data-player="sloshing" data-label="晃荡算法对比"></div>
+  </section>
+
+  <section>
+    <h2>溃坝 · 不同输入分辨率</h2>
+    <p>共同开发工况 010、031、052。并排比较 OpenFOAM 256 参考场与原始 AFM 的 16、32、64→256 自回归结果。三组均使用第 100 轮权重和逐帧 50 步采样。</p>
+    <div data-player="dam-break-resolutions" data-label="溃坝输入分辨率对比"></div>
   </section>
 
   <section>
     <h2>晃荡 · 不同输入分辨率</h2>
     <p>同一工况、同一时刻下，比较 HR256 真值和渐进 50% + RAW 的四组自回归重建。输入分别为原生 16、32、64、128，输出均为 256。</p>
     <div data-player="sloshing-resolutions" data-label="晃荡输入分辨率对比"></div>
-    <p class="note">四组采用相同的工况划分。16 和 64 输入使用 batch 4，32 和 128 输入使用 batch 8，优化器更新次数也随之不同。</p>
+    <p class="note">容器运动按工况的物理位移绘制。四组采用相同的工况划分。16 和 64 输入使用 batch 4，32 和 128 输入使用 batch 8，优化器更新次数也随之不同。</p>
   </section>
 </main>
 
@@ -59,7 +66,7 @@
     <canvas role="img"></canvas>
     <p class="error" role="alert" hidden></p>
   </div>
-  <p class="note"><a target="_blank" rel="noopener" data-gif>打开原始 GIF</a></p>
+  <p class="note"><a target="_blank" rel="noopener" data-gif>打开 GIF</a></p>
 </template>
 <script src="github_gif_showcase_20261104_preview_frames/catalog.js"></script>
 <script>
@@ -135,7 +142,7 @@
         if (request !== revision) return;
         stop();
         cache.clear();
-        error.textContent = '无法载入帧素材。请保留 HTML 和配套帧素材目录的相对位置，或打开原始 GIF。';
+        error.textContent = '无法载入帧素材。请保留 HTML 和配套帧素材目录的相对位置，或打开 GIF。';
         error.hidden = false;
       }
     }

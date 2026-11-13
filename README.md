@@ -16,9 +16,19 @@ More cases · [010](docs/github_gif_showcase_20261104/assets/dam-break/case-010.
 
 **Case 098** from the 20 held-out test cases. The eight panels show the coarse input, OpenFOAM reference, our model, EDSR, SwinIR, U-Net, FCN, and DeepLabV3+. Our model uses autoregressive inference with 50 flow integration steps per frame. The five single-frame baselines were trained on the same sloshing case split.
 
+The camera is fixed in the laboratory frame. The tank, baffle, and water field translate together according to the prescribed horizontal motion for each case. Gray ticks mark the stationary center positions.
+
 [![Synchronized sloshing case 098 comparison showing the OpenFOAM reference, our method, and five baselines](docs/github_gif_showcase_20261104/assets/sloshing/case-098.webp)](docs/github_gif_showcase_20261104/assets/sloshing/case-098.gif)
 
 More cases · [006](docs/github_gif_showcase_20261104/assets/sloshing/case-006.gif) · [007](docs/github_gif_showcase_20261104/assets/sloshing/case-007.gif) · [009](docs/github_gif_showcase_20261104/assets/sloshing/case-009.gif)
+
+## Dam break at three input resolutions
+
+The original AFM baseline reconstructs the common development cases from native 16, 32, and 64 inputs, all at 256 output resolution. Each model uses its epoch-100 checkpoint and 50-step autoregressive inference.
+
+[![Dam-break case 031 showing the OpenFOAM reference and original AFM reconstructions from native 16, 32, and 64 grids](docs/github_gif_showcase_20261104/assets/dam-break-resolutions/case-031.webp)](docs/github_gif_showcase_20261104/assets/dam-break-resolutions/case-031.gif)
+
+More cases · [010](docs/github_gif_showcase_20261104/assets/dam-break-resolutions/case-010.gif) · [052](docs/github_gif_showcase_20261104/assets/dam-break-resolutions/case-052.gif)
 
 ## Sloshing at four input resolutions
 
